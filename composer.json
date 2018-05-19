@@ -1,0 +1,5 @@
+{
+    "require": {
+        "limingxinleo/x-phalcon-dd": "^1.1"
+    }
+}
