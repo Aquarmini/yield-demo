@@ -1,5 +1,10 @@
 {
     "require": {
         "limingxinleo/x-phalcon-dd": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Test3\\": "test3"
+        }
     }
 }
