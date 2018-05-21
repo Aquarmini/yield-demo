@@ -50,6 +50,24 @@ function childTask()
     }
 }
 
+function waitForRead($socket)
+{
+    return new SystemCall(
+        function (Task $task, Scheduler $scheduler) use ($socket) {
+            $scheduler->waitForRead($socket, $task);
+        }
+    );
+}
+
+function waitForWrite($socket)
+{
+    return new SystemCall(
+        function (Task $task, Scheduler $scheduler) use ($socket) {
+            $scheduler->waitForWrite($socket, $task);
+        }
+    );
+}
+
 function task()
 {
     $tid = (yield getTaskId());
@@ -63,6 +81,10 @@ function task()
     }
 }
 
-$scheduler = new Scheduler;
-$scheduler->newTask(task());
-$scheduler->run();
+// $scheduler = new Scheduler;
+// $scheduler->newTask(task());
+// $scheduler->run();
+
+foreach ([1, 2, 3] as list($i)) {
+    dump($i);
+}
