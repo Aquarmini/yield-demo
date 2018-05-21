@@ -63,7 +63,7 @@ function handleClient($socket)
     yield waitForRead($socket);
     $data = fread($socket, 8192);
 
-    $msg = "Received following request:\n\n$data";
+    $msg = $data;
     $msgLength = strlen($msg);
 
     $response = <<<RES
