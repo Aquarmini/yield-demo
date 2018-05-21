@@ -1,33 +1,25 @@
 <?php
 // +----------------------------------------------------------------------
-// | main.php [ WE CAN DO IT JUST THINK IT ]
+// | SystemCall.php [ WE CAN DO IT JUST THINK IT ]
 // +----------------------------------------------------------------------
 // | Copyright (c) 2016-2017 limingxinleo All rights reserved.
 // +----------------------------------------------------------------------
 // | Author: limx <715557344@qq.com> <https://github.com/limingxinleo>
 // +----------------------------------------------------------------------
+namespace Test5;
 
-require __DIR__ . '/../vendor/autoload.php';
-
-function task1()
+class SystemCall
 {
-    for ($i = 1; $i <= 10; ++$i) {
-        echo "This is task 1 iteration $i.\n";
-        yield;
+    protected $callback;
+
+    public function __construct(callable $callback)
+    {
+        $this->callback = $callback;
+    }
+
+    public function __invoke(Task $task, Scheduler $scheduler)
+    {
+        $callback = $this->callback;
+        return $callback($task, $scheduler);
     }
 }
-
-function task2()
-{
-    for ($i = 1; $i <= 5; ++$i) {
-        echo "This is task 2 iteration $i.\n";
-        yield;
-    }
-}
-
-$scheduler = new \Test3\Scheduler();
-
-$scheduler->newTask(task1());
-$scheduler->newTask(task2());
-
-$scheduler->run();
