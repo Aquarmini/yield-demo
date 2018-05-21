@@ -72,7 +72,8 @@ class Scheduler
         }
     }
 
-    protected function ioPoll($timeout) {
+    protected function ioPoll($timeout)
+    {
         $rSocks = [];
         foreach ($this->waitingForRead as list($socket)) {
             $rSocks[] = $socket;
@@ -84,14 +85,13 @@ class Scheduler
         }
 
         $eSocks = []; // dummy
-
         if (!stream_select($rSocks, $wSocks, $eSocks, $timeout)) {
             return;
         }
 
         foreach ($rSocks as $socket) {
-            list(, $tasks) = $this->waitingForRead[(int) $socket];
-            unset($this->waitingForRead[(int) $socket]);
+            list(, $tasks) = $this->waitingForRead[(int)$socket];
+            unset($this->waitingForRead[(int)$socket]);
 
             foreach ($tasks as $task) {
                 $this->schedule($task);
@@ -99,12 +99,24 @@ class Scheduler
         }
 
         foreach ($wSocks as $socket) {
-            list(, $tasks) = $this->waitingForWrite[(int) $socket];
-            unset($this->waitingForWrite[(int) $socket]);
+            list(, $tasks) = $this->waitingForWrite[(int)$socket];
+            unset($this->waitingForWrite[(int)$socket]);
 
             foreach ($tasks as $task) {
                 $this->schedule($task);
             }
+        }
+    }
+
+    public function ioPollTask()
+    {
+        while (true) {
+            if ($this->taskQueue->isEmpty()) {
+                $this->ioPoll(null);
+            } else {
+                $this->ioPoll(0);
+            }
+            yield;
         }
     }
 
@@ -115,6 +127,7 @@ class Scheduler
 
     public function run()
     {
+        $this->newTask($this->ioPollTask());
         while (!$this->taskQueue->isEmpty()) {
             $task = $this->taskQueue->dequeue();
             // Generator

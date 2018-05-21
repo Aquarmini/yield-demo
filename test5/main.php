@@ -13,14 +13,6 @@ use Test5\SystemCall;
 use Test5\Scheduler;
 use Test5\Task;
 
-function getTaskId()
-{
-    return new SystemCall(function (Task $task, Scheduler $scheduler) {
-        $task->setSendValue($task->getTaskId());
-        $scheduler->schedule($task);
-    });
-}
-
 function newTask(Generator $coroutine)
 {
     return new SystemCall(
@@ -29,25 +21,6 @@ function newTask(Generator $coroutine)
             $scheduler->schedule($task);
         }
     );
-}
-
-function killTask($tid)
-{
-    return new SystemCall(
-        function (Task $task, Scheduler $scheduler) use ($tid) {
-            $task->setSendValue($scheduler->killTask($tid));
-            $scheduler->schedule($task);
-        }
-    );
-}
-
-function childTask()
-{
-    $tid = (yield getTaskId());
-    while (true) {
-        echo "Child task $tid still alive!\n";
-        yield;
-    }
 }
 
 function waitForRead($socket)
@@ -68,23 +41,46 @@ function waitForWrite($socket)
     );
 }
 
-function task()
+function server($port)
 {
-    $tid = (yield getTaskId());
-    $childTid = (yield newTask(childTask()));
+    echo "Starting server at port $port...\n";
 
-    for ($i = 1; $i <= 6; ++$i) {
-        echo "Parent task $tid iteration $i.\n";
-        yield;
+    $socket = @stream_socket_server("tcp://localhost:$port", $errNo, $errStr);
+    if (!$socket) throw new Exception($errStr, $errNo);
 
-        if ($i == 3) yield killTask($childTid);
+    stream_set_blocking($socket, 0);
+
+    while (true) {
+        yield waitForRead($socket);
+        $clientSocket = stream_socket_accept($socket, 0);
+        dump($socket, $clientSocket);
+        yield newTask(handleClient($clientSocket));
     }
 }
 
-// $scheduler = new Scheduler;
-// $scheduler->newTask(task());
-// $scheduler->run();
+function handleClient($socket)
+{
+    yield waitForRead($socket);
+    $data = fread($socket, 8192);
 
-foreach ([1, 2, 3] as list($i)) {
-    dump($i);
+    $msg = "Received following request:\n\n$data";
+    $msgLength = strlen($msg);
+
+    $response = <<<RES
+HTTP/1.1 200 OK\r
+Content-Type: text/plain\r
+Content-Length: $msgLength\r
+Connection: close\r
+\r
+$msg
+RES;
+
+    yield waitForWrite($socket);
+    fwrite($socket, $response);
+
+    fclose($socket);
 }
+
+$scheduler = new Scheduler;
+$scheduler->newTask(server(8000));
+$scheduler->run();
