@@ -12,6 +12,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use Test5\SystemCall;
 use Test5\Scheduler;
 use Test5\Task;
+use Xin\Redis;
 
 function newTask(Generator $coroutine)
 {
@@ -60,6 +61,8 @@ function server($port)
 
 function handleClient($socket)
 {
+    $btime = microtime(true);
+
     yield waitForRead($socket);
     $data = fread($socket, 8192);
 
@@ -74,6 +77,10 @@ Connection: close\r
 \r
 $msg
 RES;
+
+    while (microtime(true) - $btime < 0.01) {
+        yield;
+    }
 
     yield waitForWrite($socket);
     fwrite($socket, $response);

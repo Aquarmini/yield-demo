@@ -8,6 +8,8 @@
 // +----------------------------------------------------------------------
 require __DIR__ . '/../vendor/autoload.php';
 
+use Xin\Redis;
+
 function server($port)
 {
     echo "Starting server at port $port...\n";
@@ -26,6 +28,8 @@ function server($port)
 
 function handleClient($socket)
 {
+    $btime = microtime(true);
+
     $data = fread($socket, 8192);
 
     $msg = "$data";
@@ -39,6 +43,10 @@ Connection: close\r
 \r
 $msg
 RES;
+
+    while (microtime(true) - $btime <  0.01) {
+
+    }
 
     fwrite($socket, $response);
 
