@@ -18,5 +18,9 @@ function gen()
 
 $gen = gen();
 dump($gen->current());
+
+// $gen->next();
+// dump($gen->current());
+
 dump($gen->send('ret1'));
 dump($gen->send('ret2'));
